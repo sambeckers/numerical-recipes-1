@@ -1,0 +1,41 @@
+\section{Exercise 1}
+The Poission distribution is given by 
+\begin{equation}\label{eq:poisson}
+    P_{\lambda}(k) = \frac{\lambda^k e^{-\lambda}}{k!}
+\end{equation}
+with $k$ integer and the mean $\lambda$ is a positive number. The factorial of k will produce very large floating point numbers which causes an \texttt{Overflow} error. Therefore, we can also calculate the log of $P_{\lambda}(k)$, which can be written as (according to WolframAlpha)
+\begin{equation}
+     k\log(\lambda) - \lambda - \log(\Gamma(1 + k))
+\end{equation}
+where $\Gamma(1+k) = (1+k-1)! = k!$. We can approximate the Gamma function by the Stirling approximation, 
+\begin{equation}
+    \Gamma(1+k) = k! \approx \sqrt{2\pi k}\left(\frac{k}{e}\right)^k.
+\end{equation}
+
+However, this still results in an overflow for larger values of $k$. Therefore, we switched approach and did not use the Gamma function. Instead, we used Ramanujan's approximation for $\log(k!)$:
+\begin{equation}\label{eq:ram}
+    \log(k!) \approx k\log(k) - k + \frac{\log(k(1+4k(1 + 2k)))}{6} + \frac{log(\pi)}{2}
+\end{equation}
+
+An alternate form of the log of $P_{\lambda}(k)$ is 
+\begin{equation}
+    k\log(\lambda) - \lambda - \log(k!)
+\end{equation}
+
+Combining this with \autoref{eq:ram} gives:
+\begin{equation}\label{eq:logP}
+    \log(P_{\lambda}(k)) = k\log(\lambda) - \lambda - k\log(k) + k - \frac{\log(k(1+4k(1 + 2k)))}{6} - \frac{log(\pi)}{2}
+\end{equation}
+
+In the code, we first try to use \autoref{eq:poisson} as this does not overflow for small $k$ values. If it overflows, we use \autoref{eq:logP} and simply return $\exp(\log(P_{\lambda}(k)))$.
+NumPy's \texttt{exp()} function can also overflow, and instead of raising an error it will return zero or infinity. In this case, the value of $P$ just contains too many digits, and the only way to get a reasonable output is to use the Decimal module, which can handle these sitautions. However, this only happens in extreme cases, and we put this as an extra in code.  
+
+We make sure that all $k$ and $\lambda$ values we pass to the Poisson distribution and factorial function are \texttt{float32}s. In the factorial function, we round $k$ to make it an integer.
+
+See the code below for our implementation of this exercise:
+\lstinputlisting{NUR_Handin_1_1.py}
+
+As an additional test of the robustness of our algorithm, we also tested 10000 combinations of values between $\lambda=1-101$ and $k=0-200$.
+
+The result of the code is shown here:
+\lstinputlisting{NUR_Handin_1_1_output.txt}
