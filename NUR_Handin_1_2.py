@@ -106,7 +106,8 @@ c_arr = solve_LU(crout_improved(V_mat), y)
 print("Values of c:\n",c_arr)
 
 def solve_y(c, x_arr):
-    """Solve the polynomial for the given x values. Eq. 2 of Hand-in 1
+    """Solve the polynomial for the given x values in LU decomposition. 
+    Eq. 2 of Hand-in 1
 
     Args:
         c_arr (array): Coefficients of the polynomial
@@ -118,10 +119,10 @@ def solve_y(c, x_arr):
 
 y_LUD_interp = solve_y(c_arr, xx) # Interpolated values
 y_LUD = solve_y(c_arr, x) # Values at sample points
-abs_diff = np.abs(y_LUD - y)
+abs_diff_LUD = np.abs(y_LUD - y)
 
 plt.figure(dpi=200)
-plt.plot(xx, y_LUD_interp, c='red', label='Interpolated polynomial (LU decomposition)', zorder=0)
+plt.plot(xx, y_LUD_interp, c='r', label='Interpolated polynomial (LU decomposition)', zorder=0)
 plt.scatter(x, y, c='k', label='Samples', zorder=1)
 plt.xlim(np.min(x)-2, np.max(x)+2)
 plt.ylim(np.min(y)-100, np.max(y)+100)
@@ -131,7 +132,7 @@ plt.legend()
 plt.show()
 
 plt.figure(dpi=200)
-plt.plot(x, abs_diff, '^', c='k', label='$|y(x) - y_i|$')
+plt.plot(x, abs_diff_LUD, '^', c='r', label='$|y(x) - y_i|$ (LUD)')
 plt.xlabel('x')
 plt.ylabel('Absolute difference')
 plt.yscale('log')
@@ -201,17 +202,80 @@ def neville(x, x_grid, y_grid, M):
 
     return P[0], dy
 
-y_neville = np.array([neville(i, x, y, 20)[0] for i in xx]) # Interpolate at all x values
+def interpolate_neville(x_arr, x_grid, y_grid, order):
+    return np.array([neville(i, x_grid, y_grid, order)[0] for i in x_arr])
+
+# y_neville = np.array([neville(i, x, y, 20)[0] for i in xx]) # Interpolate at all x values
+y_neville_interp = interpolate_neville(xx, x, y, 20)
+y_neville = interpolate_neville(x, x, y, 20) 
+abs_diff_neville = np.abs(y_neville - y)
 
 plt.figure(dpi=200)
-plt.plot(x, y, 'o', label='Samples')
-plt.plot(xx, y_neville, label='Interpolated polynomial (Neville\'s algorithm)')
+plt.plot(x, y, 'o', c='k', label='Samples', zorder=1)
+plt.plot(xx, y_neville_interp, c='magenta', label='Interpolated polynomial (Neville\'s algorithm)', zorder=0)
 plt.xlim(np.min(x)-2, np.max(x)+2)
 plt.ylim(np.min(y)-100, np.max(y)+100)
 plt.legend()
 plt.show()
 
-diff = np.abs(y_LUD_interp - y_neville)
-print(np.max(diff))
+plt.figure(dpi=200)
+plt.plot(x, abs_diff_LUD, '^', c='r', label='$|y(x) - y_i|$ (LUD)')
+plt.plot(x, abs_diff_neville, '^', c='magenta', label='$|y(x) - y_i|$ (Neville)')
+plt.xlabel('x')
+plt.ylabel('Absolute difference')
+plt.yscale('log')
+plt.legend()
+plt.show()
+
+diff = np.abs(y_LUD_interp - y_neville_interp)
 
 #### Q2.C ####
+"""
+Ax' = b
+delta_b = Ax' - b
+but also Adelta_x = delta_b
+and delta_x = LU(A, delta_b)
+and x' = LU(A, b)
+so delta_x = LU(A, b) - LU(A, Ax' - b)
+"""
+def matrix_mult(A, b):
+    """Simple matrix multiplication
+
+    Args:
+        A (np.ndarray): NxN matrix
+        b (np.ndarray): Nx1 vector
+
+    Returns:
+        A*b (np.ndarray): Nx1 vector
+    """
+    return np.array([np.sum(A[i] * b) for i in range(len(A))])
+
+
+def solve_LU_iter(A, b, iter_num):
+    x = solve_LU(crout_improved(A), b)
+    for i in range(iter_num):
+        x = x - solve_LU(crout_improved(A), matrix_mult(A, x) - b)
+    return x
+
+y_LUD_iter_interp = solve_y(solve_LU_iter(V_mat, y, 10), xx) # Interpolated values
+y_LUD_iter = solve_y(solve_LU_iter(V_mat, y, 10), x) # Values at sample points
+abs_diff_LUD_iter = np.abs(y_LUD_iter - y)
+
+plt.figure(dpi=200)
+plt.plot(xx, y_LUD_iter_interp, c='r', label='Interpolated polynomial (LU decomposition, 10 iterations)', zorder=0)
+plt.scatter(x, y, c='k', label='Samples', zorder=1)
+plt.xlim(np.min(x)-2, np.max(x)+2)
+plt.ylim(np.min(y)-100, np.max(y)+100)
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend()
+plt.show()
+
+plt.figure(dpi=200)
+plt.plot(x, abs_diff_LUD_iter, '^', c='b', label='$|y(x) - y_i|$ (LUD, 10 iterations)')
+plt.plot(x, abs_diff_LUD, '^', c='r', label='$|y(x) - y_i|$ (LUD)')
+plt.xlabel('x')
+plt.ylabel('Absolute difference')
+plt.yscale('log')
+plt.legend()
+plt.show()
