@@ -1,13 +1,34 @@
+"""
+NUR_Handin1_2
+Created on 14-02-2025
+
+@author(s): Sam Beckers
+"""
 import numpy as np
 import sys
 import os
 import matplotlib.pyplot as plt
+
+#### Q2.A ####
 
 # Load data
 data=np.genfromtxt(os.path.join(sys.path[0],"Vandermonde.txt"),comments='#',dtype=np.float64)
 x=data[:,0]
 y=data[:,1]
 xx=np.linspace(x[0],x[-1],1001) #x values to interpolate at
+
+# def crout(Matrix):
+#     for i in range(len(Matrix[:,0])):
+#         for j in range(len(Matrix[0,:])):
+#             #All Beta_0j values are equal to the original matrix values
+#             #no need to do anything
+#             if i == 0:
+#                 continue
+#             if i<=j:
+#                 Matrix[i][j] = Matrix[i][j]-sum(Matrix[i][k]*Matrix[k][j] for k in range(i))
+#             if i>j:
+#                 Matrix[i][j] = (1/Matrix[j][j])*(Matrix[i][j]-sum(Matrix[i][k]*Matrix[k][j] for k in range(j)))
+#     return Matrix
 
 # Create Vandermonde matrix
 V_mat = np.zeros((len(x), len(x)))
@@ -81,13 +102,26 @@ def solve_LU(LU, b):
 
     return x
 
-c = solve_LU(crout_improved(V_mat), y)
-print("Values of c:\n",c)
+c_arr = solve_LU(crout_improved(V_mat), y)
+print("Values of c:\n",c_arr)
 
-y_poly = [sum([c[j]*i**j for j in range(len(x))]) for i in xx] # Interpolated values
+def solve_y(c, x_arr):
+    """Solve the polynomial for the given x values. Eq. 2 of Hand-in 1
+
+    Args:
+        c_arr (array): Coefficients of the polynomial
+        x_arr (array): x values to solve for
+    Returns:
+        y (array): y values of the polynomial
+    """
+    return np.array([sum([c[j]*i**j for j in range(len(c_arr))]) for i in x_arr])
+
+y_LUD_interp = solve_y(c_arr, xx) # Interpolated values
+y_LUD = solve_y(c_arr, x) # Values at sample points
+abs_diff = np.abs(y_LUD - y)
 
 plt.figure(dpi=200)
-plt.plot(xx, y_poly, c='red', label='Interpolated polynomial (LU decomposition)', zorder=0)
+plt.plot(xx, y_LUD_interp, c='red', label='Interpolated polynomial (LU decomposition)', zorder=0)
 plt.scatter(x, y, c='k', label='Samples', zorder=1)
 plt.xlim(np.min(x)-2, np.max(x)+2)
 plt.ylim(np.min(y)-100, np.max(y)+100)
@@ -95,6 +129,15 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
 plt.show()
+
+plt.figure(dpi=200)
+plt.plot(x, abs_diff, '^', c='k', label='$|y(x) - y_i|$')
+plt.xlabel('x')
+plt.ylabel('Absolute difference')
+plt.yscale('log')
+plt.legend()
+plt.show()
+#### Q2.B ####
 
 def bisection_v2(x, sample_points, M):
     """Bisection algorithm to find nearest sample point(s) to x
@@ -158,12 +201,17 @@ def neville(x, x_grid, y_grid, M):
 
     return P[0], dy
 
-y_interp = [neville(i, x, y, 20)[0] for i in xx] # Interpolate at all x values
+y_neville = np.array([neville(i, x, y, 20)[0] for i in xx]) # Interpolate at all x values
 
 plt.figure(dpi=200)
 plt.plot(x, y, 'o', label='Samples')
-plt.plot(xx, y_interp, label='Interpolated polynomial (Neville\'s algorithm)')
+plt.plot(xx, y_neville, label='Interpolated polynomial (Neville\'s algorithm)')
 plt.xlim(np.min(x)-2, np.max(x)+2)
 plt.ylim(np.min(y)-100, np.max(y)+100)
 plt.legend()
 plt.show()
+
+diff = np.abs(y_LUD_interp - y_neville)
+print(np.max(diff))
+
+#### Q2.C ####
