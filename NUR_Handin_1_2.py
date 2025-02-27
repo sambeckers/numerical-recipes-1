@@ -24,7 +24,7 @@ for i in range(len(x)):
     for j in range(len(x)):
         V_mat[i,j] = x[i]**j
 
-def plot(x, xx, y_1, y_2 = None, color_1 = None, color_2 = None, label_1 = None, label_2 = None, save = True, save_name = None,
+def plot(x, xx, y_1, y_2 = None, color_1 = None, color_2 = None, label_1 = None, label_2 = None, save = True, show = False, save_name = None,
         interp=False, abs_diff = False, plot_y2 = False):
     if interp: 
         plt.figure(dpi=200)
@@ -37,7 +37,8 @@ def plot(x, xx, y_1, y_2 = None, color_1 = None, color_2 = None, label_1 = None,
         plt.legend()
         if save:
             plt.savefig(save_name)
-        plt.show()
+        if show:
+            plt.show()
     if abs_diff:
         plt.figure(dpi=200)
         plt.plot(x, y_1, '^', c=color_1, label=label_1)
@@ -49,7 +50,8 @@ def plot(x, xx, y_1, y_2 = None, color_1 = None, color_2 = None, label_1 = None,
         plt.legend()
         if save:
             plt.savefig(save_name)
-        plt.show()
+        if show:
+            plt.show()
 
 def crout_improved(A):
     """An improved version of the Crout algorithm for LU decomposition
@@ -110,9 +112,9 @@ def solve_LU(LU, b):
     # Backward substitution
     x = np.zeros(n)
     x[n-1] = y[n-1] / LU[n-1,n-1]
-    for i in range(n-1, -1, -1): # Backwards loop
+    for i in range(n-1, -1, -1): # Backward loop
         if j > i: 
-            beta_x_sum = np.sum([LU[i,j]*x[j] for j in range(n-1, -1, -1)]) # Another backwards loop
+            beta_x_sum = np.sum([LU[i,j]*x[j] for j in range(n-1, -1, -1)]) # Another backward loop
             x[i] = (1/LU[i,i]) * (y[i] - beta_x_sum)
 
     return x
@@ -238,8 +240,8 @@ def main():
         return y_LUD_interp, abs_diff_LUD
 
     y_LUD_interp, abs_diff_LUD = compute_2A(c_arr, 1)
-    plot(x, xx, y_LUD_interp, color_1='r', label_1='Interpolated polynomial (LU decomposition)', interp=True, save_name='2A_LU_Decomposition_polynomial_fit.png')
-    plot(x, xx, abs_diff_LUD, color_1='r', label_1='$|y(x) - y_i|$ (LUD)', abs_diff=True, save_name='2A_LU_Decomposition_absolute_difference.png')
+    plot(x, xx, y_LUD_interp, color_1='r', label_1='Interpolated polynomial (LU decomposition)', interp=True, save_name='./plots/2A_LU_Decomposition_polynomial_fit.png')
+    plot(x, xx, abs_diff_LUD, color_1='r', label_1='$|y(x) - y_i|$ (LUD)', abs_diff=True, save_name='./plots/2A_LU_Decomposition_absolute_difference.png')
 
     ## Q2.B ##
     def compute_2B(iter_num):
@@ -250,8 +252,8 @@ def main():
         return y_neville_interp, abs_diff_neville
     
     y_neville_interp, abs_diff_neville = compute_2B(1)
-    plot(x, xx, y_neville_interp, color_1='magenta', label_1='Interpolated polynomial (Neville\'s algorithm)', interp=True, save_name='2B_Neville_interpolation.png')
-    plot(x, xx, abs_diff_neville, abs_diff_LUD, color_1='magenta', color_2 = 'r', label_1='$|y(x) - y_i|$ (Neville)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='2B_AbsoluteDiff_LU_Neville.png')
+    plot(x, xx, y_neville_interp, color_1='magenta', label_1='Interpolated polynomial (Neville\'s algorithm)', interp=True, save_name='./plots/2B_Neville_interpolation.png')
+    plot(x, xx, abs_diff_neville, abs_diff_LUD, color_1='magenta', color_2 = 'r', label_1='$|y(x) - y_i|$ (Neville)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='./plots/2B_AbsoluteDiff_LU_Neville.png')
 
     ## Q2.C ##
     def compute_2C(iter_num):
@@ -261,13 +263,13 @@ def main():
         return y_LUD_iter_interp, abs_diff_LUD_iter
     
     y_LUD_iter_interp, abs_diff_LUD_iter = compute_2C(10)
-    plot(x, xx, y_LUD_iter_interp, color_1='b', label_1='Interpolated polynomial (LU decomposition, 10 iterations)', interp=True, save_name='2C_LU_Decomposition_iterative_polynomial_fit.png')
-    plot(x, xx, abs_diff_LUD_iter, abs_diff_LUD, color_1='b', color_2 = 'r', label_1='$|y(x) - y_i|$ (LUD, 10 iterations)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='2C_AbsoluteDiff_LU_iterative.png')
+    plot(x, xx, y_LUD_iter_interp, color_1='b', label_1='Interpolated polynomial (LU decomposition, 10 iterations)', interp=True, save_name='./plots/2C_LU_Decomposition_iterative_polynomial_fit.png')
+    plot(x, xx, abs_diff_LUD_iter, abs_diff_LUD, color_1='b', color_2 = 'r', label_1='$|y(x) - y_i|$ (LUD, 10 iterations)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='./plots/2C_AbsoluteDiff_LU_iterative.png')
 
     ## Q2.D ##
-    time_2A = timeit.timeit(lambda: compute_2A(c_arr, 10), number=20) 
-    time_2B = timeit.timeit(lambda: compute_2B(10), number=20) 
-    time_2C = timeit.timeit(lambda: compute_2C(10), number=20)
+    time_2A = timeit.timeit(lambda: compute_2A(c_arr, 10), number=10) 
+    time_2B = timeit.timeit(lambda: compute_2B(10), number=10) 
+    time_2C = timeit.timeit(lambda: compute_2C(10), number=10)
     print(f"Time for 2A: {time_2A}s")
     print(f"Time for 2B: {time_2B}s")
     print(f"Time for 2C: {time_2C}s")
