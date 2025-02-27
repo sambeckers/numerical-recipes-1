@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import os
 import matplotlib.pyplot as plt
+import timeit
 
 #### Q2.A ####
 
@@ -178,6 +179,7 @@ def neville(x, x_grid, y_grid, M):
     
     Returns:
         P[0]: the interpolated value
+        dy: error estimate
     """
     j_low = bisection_v2(x, x_grid, M) 
     P = np.copy(y_grid[j_low:j_low + M]) # Set initial P_i values at M tabulated points around x
@@ -228,28 +230,47 @@ def main():
     c_arr = solve_LU(crout_improved(V_mat), y)
     print("Values of c:\n",c_arr)
 
-    y_LUD_interp = solve_y(c_arr, xx) # Interpolated values
-    y_LUD = solve_y(c_arr, x) # Values at sample points
-    abs_diff_LUD = np.abs(y_LUD - y)
+    def compute_2A(c_arr, iter_num):
+        for _ in range(iter_num):
+            y_LUD_interp = solve_y(c_arr, xx) # Interpolated values
+            y_LUD = solve_y(c_arr, x) # Values at sample points
+            abs_diff_LUD = np.abs(y_LUD - y)
+        return y_LUD_interp, abs_diff_LUD
 
+    y_LUD_interp, abs_diff_LUD = compute_2A(c_arr, 1)
     plot(x, xx, y_LUD_interp, color_1='r', label_1='Interpolated polynomial (LU decomposition)', interp=True, save_name='2A_LU_Decomposition_polynomial_fit.png')
     plot(x, xx, abs_diff_LUD, color_1='r', label_1='$|y(x) - y_i|$ (LUD)', abs_diff=True, save_name='2A_LU_Decomposition_absolute_difference.png')
 
     ## Q2.B ##
-    y_neville_interp = interpolate_neville(xx, x, y, 20)
-    y_neville = interpolate_neville(x, x, y, 20) 
-    abs_diff_neville = np.abs(y_neville - y)
-
+    def compute_2B(iter_num):
+        for _ in range(iter_num):
+            y_neville_interp = interpolate_neville(xx, x, y, 20)
+            y_neville = interpolate_neville(x, x, y, 20) 
+            abs_diff_neville = np.abs(y_neville - y)
+        return y_neville_interp, abs_diff_neville
+    
+    y_neville_interp, abs_diff_neville = compute_2B(1)
     plot(x, xx, y_neville_interp, color_1='magenta', label_1='Interpolated polynomial (Neville\'s algorithm)', interp=True, save_name='2B_Neville_interpolation.png')
     plot(x, xx, abs_diff_neville, abs_diff_LUD, color_1='magenta', color_2 = 'r', label_1='$|y(x) - y_i|$ (Neville)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='2B_AbsoluteDiff_LU_Neville.png')
 
     ## Q2.C ##
-    y_LUD_iter_interp = solve_y(solve_LU_iter(V_mat, y, 10), xx) # Interpolated values
-    y_LUD_iter = solve_y(solve_LU_iter(V_mat, y, 10), x) # Values at sample points
-    abs_diff_LUD_iter = np.abs(y_LUD_iter - y)
-
+    def compute_2C(iter_num):
+        y_LUD_iter_interp = solve_y(solve_LU_iter(V_mat, y, iter_num), xx) # Interpolated values
+        y_LUD_iter = solve_y(solve_LU_iter(V_mat, y, iter_num), x) # Values at sample points
+        abs_diff_LUD_iter = np.abs(y_LUD_iter - y)
+        return y_LUD_iter_interp, abs_diff_LUD_iter
+    
+    y_LUD_iter_interp, abs_diff_LUD_iter = compute_2C(10)
     plot(x, xx, y_LUD_iter_interp, color_1='b', label_1='Interpolated polynomial (LU decomposition, 10 iterations)', interp=True, save_name='2C_LU_Decomposition_iterative_polynomial_fit.png')
     plot(x, xx, abs_diff_LUD_iter, abs_diff_LUD, color_1='b', color_2 = 'r', label_1='$|y(x) - y_i|$ (LUD, 10 iterations)', label_2='$|y(x) - y_i|$ (LUD)', abs_diff=True, plot_y2=True, save_name='2C_AbsoluteDiff_LU_iterative.png')
+
+    ## Q2.D ##
+    time_2A = timeit.timeit(lambda: compute_2A(c_arr, 10), number=20) 
+    time_2B = timeit.timeit(lambda: compute_2B(10), number=20) 
+    time_2C = timeit.timeit(lambda: compute_2C(10), number=20)
+    print(f"Time for 2A: {time_2A}s")
+    print(f"Time for 2B: {time_2B}s")
+    print(f"Time for 2C: {time_2C}s")
 
 if __name__ == "__main__":
     main()
